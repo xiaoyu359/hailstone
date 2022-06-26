@@ -1,2 +1,2 @@
 # hailstone
-hailstone(冰雹) lark 红包项目后端服务
+hailstone(冰雹) SavourDao 项目后端服务
