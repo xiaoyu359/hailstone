@@ -1,0 +1,70 @@
+kind: pipeline
+type: docker
+name: default
+
+steps:
+  - name: package
+    image: maven:3-jdk-8
+    volumes:
+      - name: maven-cache
+        path: /root/.m2
+      - name: maven-build
+        path: /app/build
+    commands:
+      - mvn clean package
+      - mkdir ./build
+      - cp hailstone-admin/target/hailstone-admin.jar ./build/hailstone-admin.jar
+      - cp Dockerfile ./build/Dockerfile
+      #       - cp run.sh /app/build/run.sh
+    when:
+#      event: [push, pull_request]
+      branch: [ test ]
+
+  - name: scp
+    image: appleboy/drone-scp
+    settings:
+      host:
+        from_secret: delpoy_host
+      port: 22
+      username:
+        from_secret: delpoy_user
+      password:
+        from_secret: delpoy_password
+      target: /app/drone/apps/savourdao/hailstone
+      source: ./build
+      rm: true
+    when:
+#      event: [push, pull_request]
+      branch: [test]
+
+
+  - name: run
+    image: appleboy/drone-ssh
+    settings:
+      host:
+        from_secret: delpoy_host
+      port: 22
+      username:
+        from_secret: delpoy_user
+      password:
+        from_secret: delpoy_password
+      script:
+        - cd  /app/drone/apps/savourdao/hailstone/build
+        - docker build -t savourdao-hailstone .
+        - docker stop savourdao-hailstone
+        - docker rm savourdao-hailstone
+        - docker run -d -p 11000:9090 --name savourdao-hailstone  savourdao-hailstone # 重新打包镜像
+    when:
+#      event: [push, pull_request]
+      branch: [test]
+
+volumes:
+  - name: cache
+    host:
+      path: /tmp/cache
+  - name: maven-build
+    host:
+      path: /mydata/maven/build
+  - name: maven-cache
+    host:
+      path: /mydata/maven/cache
