@@ -221,6 +221,7 @@
         <module>hailstone-quartz</module>
         <module>hailstone-generator</module>
         <module>hailstone-common</module>
+        <module>hailstone-rpc</module>
     </modules>
     <packaging>pom</packaging>
 
